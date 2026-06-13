@@ -35,7 +35,7 @@ on a single **AMD Radeon RX 9070 XT**. No cloud, no API bills. This repo is the 
 
 - `index.html` — the standalone showcase page
 
-The 30-second audio sample is served from the portfolio root (`/generated-music.mp3`),
+The 30-second audio sample is served from the portfolio root (`/someaudioimade.mp3`),
 so the clip lives in one place and is shared with the card on the main site.
 
 ---
