@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="description" content="Ray Mahbub's local AI asset pipeline — image, music and pixel-art generation running entirely on an AMD Radeon RX 9070 XT. ComfyUI + SDXL, Stable Audio Open, and a custom Aseprite integration, with no cloud and no API bills." />
+<title>Local AI Asset Pipeline — Ray Mahbub</title>
+<link rel="icon" type="image/svg+xml" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="%230a0a0b"/><text x="5" y="23" font-family="Georgia, serif" font-style="italic" font-size="17" fill="%23c97e4e">rm</text></svg>' />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@1,9..144,300..500&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --bg:#0a0a0b; --cream:#f2f0ea; --faint:#98948a; --dim:#5b574e;
+  --copper:#c97e4e; --copper-soft:#e0a075; --line:rgba(242,240,234,.08);
+  --ease:cubic-bezier(.22,1,.36,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg); color:var(--cream);
+  font-family:"Inter",system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased; line-height:1.6;
+}
+.halo{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse 70% 45% at 50% -5%,rgba(201,126,78,.07),transparent)}
+.wrap{position:relative;max-width:1060px;margin:0 auto;padding:0 22px}
+header{display:flex;align-items:center;justify-content:space-between;padding:26px 0}
+.wordmark{font-family:"Fraunces",Georgia,serif;font-style:italic;font-size:18px;color:var(--cream);text-decoration:none}
+header nav a{color:var(--faint);text-decoration:none;font-size:12px;letter-spacing:.14em;text-transform:uppercase;margin-left:22px;transition:color .3s}
+header nav a:hover{color:var(--copper-soft)}
+.hero{padding:64px 0 40px}
+.pill{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:rgba(242,240,234,.04);border-radius:999px;padding:6px 14px;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--copper);animation:pulse 2.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(201,126,78,.5)}50%{box-shadow:0 0 0 5px rgba(201,126,78,0)}}
+h1{font-size:clamp(2.1rem,5.5vw,3.6rem);font-weight:600;letter-spacing:-.02em;line-height:1.06;margin:20px 0 16px;max-width:780px}
+h1 em{font-family:"Fraunces",Georgia,serif;font-weight:300;color:var(--copper)}
+.lede{color:var(--faint);max-width:660px;font-size:16px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin:42px 0 8px}
+.stat{border:1px solid var(--line);border-radius:16px;padding:16px 18px;background:linear-gradient(180deg,rgba(242,240,234,.045),rgba(242,240,234,.018))}
+.stat b{display:block;font-size:24px;font-weight:600;color:var(--cream)}
+.stat span{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+section{padding:54px 0 8px}
+.sec-head{display:flex;align-items:baseline;gap:14px;margin-bottom:26px}
+.sec-head i{font-family:"Fraunces",Georgia,serif;font-style:italic;color:var(--copper);font-size:14px}
+.sec-head h2{font-size:12px;font-weight:500;letter-spacing:.22em;text-transform:uppercase;color:var(--faint)}
+.sec-head::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--line),transparent)}
+.card{border:1px solid var(--line);border-radius:20px;background:linear-gradient(180deg,rgba(242,240,234,.045),rgba(242,240,234,.018));box-shadow:0 -24px 70px -32px rgba(242,240,234,.07) inset;padding:24px;transition:border-color .35s var(--ease),transform .35s var(--ease)}
+.card:hover{border-color:rgba(201,126,78,.35);transform:translateY(-3px)}
+.diagram{padding:14px}
+.diagram svg{width:100%;height:auto;display:block}
+.dlabel{font-family:"JetBrains Mono",monospace;font-size:11px;fill:var(--cream)}
+.dsub{font-family:"JetBrains Mono",monospace;font-size:9px;fill:#98948a}
+.dnote{font-family:"JetBrains Mono",monospace;font-size:9.5px;fill:#5b574e}
+.grid{display:grid;gap:14px}
+.grid.svc{grid-template-columns:repeat(auto-fill,minmax(235px,1fr))}
+.svc-card h3{font-size:15px;font-weight:600;display:flex;align-items:center;gap:8px}
+.svc-card h3 span{width:6px;height:6px;border-radius:50%;background:var(--copper);flex:none}
+.svc-card p{font-size:13px;color:var(--faint);margin-top:6px}
+.svc-card .rep{margin-top:12px;font-family:"JetBrains Mono",monospace;font-size:10.5px;color:var(--dim)}
+.svc-card .rep b{color:var(--copper-soft);font-weight:400}
+.group-label{grid-column:1/-1;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--dim);margin-top:14px}
+.group-label:first-child{margin-top:0}
+.two{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+.spec dt{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-top:14px}
+.spec dt:first-child{margin-top:0}
+.spec dd{font-size:14px;color:var(--cream);margin-top:2px}
+.spec dd small{display:block;color:var(--faint);font-size:12.5px}
+.spec code{font-family:"JetBrains Mono",monospace;font-size:11.5px;color:var(--copper-soft)}
+.ops li{list-style:none;font-size:14px;color:var(--faint);padding:10px 0;border-top:1px solid var(--line);display:flex;gap:10px}
+.ops li:first-child{border-top:none}
+.ops li::before{content:"—";color:var(--copper);flex:none}
+.ops b{color:var(--cream);font-weight:500}
+.story{display:flex;gap:16px}
+.story i{font-family:"Fraunces",Georgia,serif;font-style:italic;color:var(--copper);font-size:15px;flex:none;padding-top:2px}
+.story h3{font-size:14.5px;font-weight:600}
+.story p{font-size:13px;color:var(--faint);margin-top:5px}
+.artifact{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.artifact .meta{flex:1;min-width:220px}
+.artifact h3{font-size:16px;font-weight:600}
+.artifact p{font-size:13px;color:var(--faint);margin-top:6px;max-width:460px}
+.player{display:flex;align-items:center;gap:12px;border:1px solid var(--line);background:rgba(242,240,234,.03);border-radius:14px;padding:12px 16px;min-width:280px}
+.player audio{height:34px}
+.player .tag{font-family:"JetBrains Mono",monospace;font-size:10px;color:var(--dim);white-space:nowrap}
+footer{margin-top:64px;border-top:1px solid var(--line);padding:26px 0 40px;display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--dim)}
+footer a{color:var(--faint);text-decoration:none}
+footer a:hover{color:var(--copper-soft)}
+.fade{opacity:0;transform:translateY(20px);transition:opacity .8s var(--ease),transform .8s var(--ease)}
+.fade.in{opacity:1;transform:none}
+.flow{stroke-dasharray:3 5;animation:dash 1.4s linear infinite}
+@keyframes dash{to{stroke-dashoffset:-16}}
+@media (prefers-reduced-motion:reduce){
+  .fade{opacity:1;transform:none;transition:none}
+  .dot{animation:none}
+  .flow{animation:none}
+  html{scroll-behavior:auto}
+  .card:hover{transform:none}
+}
+</style>
+</head>
+<body>
+<div class="halo" aria-hidden="true"></div>
+<div class="wrap">
+
+<header>
+  <a class="wordmark" href="https://github.com/ray98872">ray mahbub</a>
+  <nav>
+    <a href="#pipeline">Pipeline</a>
+    <a href="#toolkit">Toolkit</a>
+    <a href="#amd">On AMD</a>
+    <a href="#listen">Listen</a>
+  </nav>
+</header>
+
+<section class="hero">
+  <p class="pill"><span class="dot"></span> 100% local · no cloud, no api bills</p>
+  <h1>Game-asset generation, <em>running entirely on my own GPU.</em></h1>
+  <p class="lede">A local-first pipeline that produces three kinds of game asset — images, music and pixel
+  art — on a single AMD Radeon RX 9070&nbsp;XT. ComfyUI node-graphs drive SDXL with upscale and detail
+  passes; Stable Audio Open composes short pieces straight to MP3; and a custom Python server wires
+  Stable Diffusion directly into Aseprite for LoRA-styled sprites. The twist: almost none of this
+  officially targets AMD — so getting it onto a Radeon was half the project.</p>
+  <div class="stats">
+    <div class="stat fade"><b>RX 9070 XT</b><span>one AMD gpu</span></div>
+    <div class="stat fade"><b>3</b><span>asset modalities</span></div>
+    <div class="stat fade"><b>~47 GB</b><span>local model weights</span></div>
+    <div class="stat fade"><b>9</b><span>comfyui node packs</span></div>
+  </div>
+</section>
+
+<section id="pipeline">
+  <div class="sec-head"><i>01</i><h2>The pipeline</h2></div>
+  <div class="card diagram fade">
+    <svg viewBox="0 0 760 430" role="img" aria-label="Pipeline diagram: three lanes share one local GPU. Image lane — a text prompt feeds a ComfyUI node graph (SDXL, upscale, detail) to a PNG. Audio lane — a text prompt feeds Stable Audio Open's KSampler workflow to an MP3. Pixel-art lane — Aseprite exchanges prompts and sprites with the aisprite Flask server running SDXL plus pixel LoRAs. All three run on PyTorch with a DirectML, CUDA, ROCm or CPU backend, targeting an AMD Radeon RX 9070 XT.">
+      <defs>
+        <marker id="a" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#5b574e"/></marker>
+        <marker id="ac" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#c97e4e"/></marker>
+      </defs>
+
+      <text x="130" y="16" text-anchor="middle" class="dnote">image</text>
+      <text x="380" y="16" text-anchor="middle" class="dnote">music</text>
+      <text x="630" y="16" text-anchor="middle" class="dnote">pixel art</text>
+
+      <rect x="30" y="26" width="200" height="44" rx="10" fill="rgba(242,240,234,.04)" stroke="rgba(242,240,234,.14)"/>
+      <text x="130" y="46" text-anchor="middle" class="dlabel">text prompt</text>
+      <text x="130" y="59" text-anchor="middle" class="dsub">subject · style · tags</text>
+
+      <rect x="280" y="26" width="200" height="44" rx="10" fill="rgba(242,240,234,.04)" stroke="rgba(242,240,234,.14)"/>
+      <text x="380" y="46" text-anchor="middle" class="dlabel">text prompt</text>
+      <text x="380" y="59" text-anchor="middle" class="dsub">mood · genre · length</text>
+
+      <rect x="530" y="26" width="200" height="44" rx="10" fill="rgba(242,240,234,.04)" stroke="rgba(242,240,234,.14)"/>
+      <text x="630" y="46" text-anchor="middle" class="dlabel">Aseprite</text>
+      <text x="630" y="59" text-anchor="middle" class="dsub">plugin · in-editor</text>
+
+      <rect x="30" y="120" width="200" height="66" rx="10" fill="rgba(201,126,78,.10)" stroke="rgba(201,126,78,.5)"/>
+      <text x="130" y="142" text-anchor="middle" class="dlabel">ComfyUI</text>
+      <text x="130" y="157" text-anchor="middle" class="dsub">SDXL base + refiner</text>
+      <text x="130" y="169" text-anchor="middle" class="dsub">upscale · detail passes</text>
+
+      <rect x="280" y="120" width="200" height="66" rx="10" fill="rgba(201,126,78,.10)" stroke="rgba(201,126,78,.5)"/>
+      <text x="380" y="142" text-anchor="middle" class="dlabel">Stable Audio Open</text>
+      <text x="380" y="157" text-anchor="middle" class="dsub">music-generation graph</text>
+      <text x="380" y="169" text-anchor="middle" class="dsub">prompt → ksampler</text>
+
+      <rect x="530" y="120" width="200" height="66" rx="10" fill="rgba(201,126,78,.10)" stroke="rgba(201,126,78,.5)"/>
+      <text x="630" y="142" text-anchor="middle" class="dlabel">aisprite</text>
+      <text x="630" y="157" text-anchor="middle" class="dsub">flask · sd_server</text>
+      <text x="630" y="169" text-anchor="middle" class="dsub">SDXL + pixel LoRAs</text>
+
+      <rect x="30" y="236" width="200" height="46" rx="10" fill="rgba(242,240,234,.04)" stroke="rgba(242,240,234,.14)"/>
+      <text x="130" y="263" text-anchor="middle" class="dlabel">image · PNG</text>
+      <rect x="280" y="236" width="200" height="46" rx="10" fill="rgba(242,240,234,.04)" stroke="rgba(242,240,234,.14)"/>
+      <text x="380" y="263" text-anchor="middle" class="dlabel">music · MP3</text>
+      <rect x="530" y="236" width="200" height="46" rx="10" fill="rgba(242,240,234,.04)" stroke="rgba(242,240,234,.14)"/>
+      <text x="630" y="263" text-anchor="middle" class="dlabel">sprite · PNG</text>
+
+      <rect x="30" y="330" width="700" height="46" rx="10" fill="rgba(242,240,234,.03)" stroke="rgba(242,240,234,.1)" stroke-dasharray="4 4"/>
+      <text x="380" y="350" text-anchor="middle" class="dlabel">PyTorch + diffusers</text>
+      <text x="380" y="365" text-anchor="middle" class="dsub">backend: DirectML / CUDA / ROCm / CPU — auto-detected</text>
+
+      <rect x="280" y="392" width="200" height="34" rx="9" fill="rgba(201,126,78,.10)" stroke="rgba(201,126,78,.5)"/>
+      <text x="380" y="414" text-anchor="middle" class="dlabel">Radeon RX 9070 XT</text>
+
+      <line x1="130" y1="70" x2="130" y2="118" stroke="#c97e4e" stroke-width="1.4" class="flow" marker-end="url(#ac)"/>
+      <line x1="380" y1="70" x2="380" y2="118" stroke="#c97e4e" stroke-width="1.4" class="flow" marker-end="url(#ac)"/>
+      <line x1="612" y1="70" x2="612" y2="118" stroke="#c97e4e" stroke-width="1.4" class="flow" marker-end="url(#ac)"/>
+      <text x="500" y="98" class="dnote">prompt</text>
+      <line x1="648" y1="118" x2="648" y2="72" stroke="#5b574e" stroke-width="1.2" marker-end="url(#a)"/>
+      <text x="656" y="98" class="dnote">sprite</text>
+
+      <line x1="130" y1="186" x2="130" y2="234" stroke="#5b574e" stroke-width="1.2" marker-end="url(#a)"/>
+      <line x1="380" y1="186" x2="380" y2="234" stroke="#5b574e" stroke-width="1.2" marker-end="url(#a)"/>
+      <line x1="630" y1="186" x2="630" y2="234" stroke="#5b574e" stroke-width="1.2" marker-end="url(#a)"/>
+
+      <line x1="130" y1="282" x2="130" y2="328" stroke="rgba(201,126,78,.45)" stroke-width="1.2" stroke-dasharray="3 4"/>
+      <line x1="380" y1="282" x2="380" y2="328" stroke="rgba(201,126,78,.45)" stroke-width="1.2" stroke-dasharray="3 4"/>
+      <line x1="630" y1="282" x2="630" y2="328" stroke="rgba(201,126,78,.45)" stroke-width="1.2" stroke-dasharray="3 4"/>
+      <text x="150" y="312" class="dnote">runs on</text>
+
+      <line x1="380" y1="376" x2="380" y2="390" stroke="#c97e4e" stroke-width="1.4" marker-end="url(#ac)"/>
+    </svg>
+  </div>
+  <div class="grid two" style="margin-top:14px">
+    <div class="card fade">
+      <h3 style="font-size:15px">One graph, many passes</h3>
+      <p style="font-size:13px;color:var(--faint);margin-top:6px">Image generation isn't a single model call — it's a ComfyUI node graph. SDXL lays down a base
+      image, an upscaler raises resolution, and detail/segmentation passes clean up faces and fine
+      structure before the refiner finishes the frame. Every stage is a node, wired by hand and reusable.</p>
+    </div>
+    <div class="card fade">
+      <h3 style="font-size:15px">NVIDIA-targeted, AMD-powered</h3>
+      <p style="font-size:13px;color:var(--faint);margin-top:6px">Each tool assumes a CUDA-capable NVIDIA card. The pixel-art server gets around that with a launcher
+      that detects the GPU at startup and installs the right PyTorch backend — DirectML for the Radeon on
+      Windows — so the same code runs on AMD with no source changes.</p>
+    </div>
+  </div>
+</section>
+
+<section id="toolkit">
+  <div class="sec-head"><i>02</i><h2>The toolkit</h2></div>
+  <div class="grid svc">
+    <p class="group-label">Image — ComfyUI</p>
+    <div class="card svc-card fade"><h3><span></span>ComfyUI</h3><p>Node-graph runtime for diffusion. The whole image workflow lives here as connected nodes, not a script.</p><p class="rep"><b>generation runtime</b></p></div>
+    <div class="card svc-card fade"><h3><span></span>SDXL base + refiner</h3><p>The Stable Diffusion XL pair — base composition then a refiner pass for the final detail.</p><p class="rep"><b>foundation model</b></p></div>
+    <div class="card svc-card fade"><h3><span></span>Custom checkpoints</h3><p>CyberRealistic XL plus two large fine-tunes (~12 GB and ~6.7 GB) for specific looks, with a dedicated VAE and text encoders.</p><p class="rep"><b>~47 GB of weights</b></p></div>
+
+    <p class="group-label">Detail &amp; scale — node packs</p>
+    <div class="card svc-card fade"><h3><span></span>Impact Pack</h3><p>Detailing and segmentation — targeted re-generation of faces, hands and regions of interest.</p><p class="rep"><b>quality pass</b></p></div>
+    <div class="card svc-card fade"><h3><span></span>Ultimate SD Upscale</h3><p>Tiled diffusion upscaling that pushes output well past the model's native resolution.</p><p class="rep"><b>resolution</b></p></div>
+    <div class="card svc-card fade"><h3><span></span>KJNodes · rgthree · Essentials</h3><p>Workflow utilities, cleaner graph routing and quality-of-life nodes that keep complex graphs readable.</p><p class="rep"><b>graph tooling</b></p></div>
+    <div class="card svc-card fade"><h3><span></span>LoRA Manager · Easy-Use</h3><p>Loads and swaps LoRAs and bundles common steps into compact nodes — nine custom packs in all.</p><p class="rep"><b>style control</b></p></div>
+
+    <p class="group-label">Music — Stable Audio</p>
+    <div class="card svc-card fade"><h3><span></span>Stable Audio Open</h3><p>A text-to-audio model run through a music-generation graph: prompt → KSampler → MP3, on the same GPU.</p><p class="rep">composes <b>music to mp3</b></p></div>
+
+    <p class="group-label">Pixel art — aisprite</p>
+    <div class="card svc-card fade"><h3><span></span>aisprite server</h3><p>A Flask server (<code style="font-family:'JetBrains Mono',monospace;font-size:11px">sd_server</code>) on <code style="font-family:'JetBrains Mono',monospace;font-size:11px">127.0.0.1:5000</code> that loads SDXL via diffusers and serves generations to the editor.</p><p class="rep"><b>local inference api</b></p></div>
+    <div class="card svc-card fade"><h3><span></span>Aseprite plugin</h3><p>Prompts the server and drops the result straight onto the canvas — generate without leaving the pixel editor.</p><p class="rep"><b>in-editor workflow</b></p></div>
+    <div class="card svc-card fade"><h3><span></span>Pixel-art LoRAs</h3><p>Two style LoRAs (<code style="font-family:'JetBrains Mono',monospace;font-size:11px">Super_PixelArt_Sprite_XL</code>, <code style="font-family:'JetBrains Mono',monospace;font-size:11px">pixel_f2</code>) layered via peft to keep output in a consistent sprite style.</p><p class="rep"><b>consistent style</b></p></div>
+  </div>
+</section>
+
+<section id="amd">
+  <div class="sec-head"><i>03</i><h2>Running it on AMD</h2></div>
+  <div class="grid two">
+    <div class="card fade">
+      <dl class="spec">
+        <dt>GPU</dt><dd>AMD Radeon RX 9070 XT<small>a consumer Radeon doing the work an NVIDIA card is usually assumed to do</small></dd>
+        <dt>Primary backend</dt><dd><code>torch-directml</code> on Windows<small>base PyTorch from the CPU wheel + the DirectML plugin, so tensors run on the Radeon</small></dd>
+        <dt>Auto-fallback</dt><dd>CUDA · ROCm · CPU<small>the launcher detects the hardware and picks CUDA (NVIDIA), ROCm (AMD on Linux) or CPU as appropriate</small></dd>
+        <dt>Inference stack</dt><dd>PyTorch · diffusers · peft · Flask<small>diffusers loads SDXL / SD 1.5; peft applies LoRAs; Flask exposes the local API</small></dd>
+      </dl>
+    </div>
+    <div class="card fade">
+      <dl class="spec">
+        <dt>GPU detection</dt><dd>Probes, in order<small><code>nvidia-smi</code> → Windows <code>win32_VideoController</code> → Linux <code>lspci</code> / <code>rocm-smi</code> → CPU</small></dd>
+        <dt>Base models</dt><dd>SDXL 1.0 (~7 GB) or SD 1.5 (~4 GB)<small>chosen at startup; custom checkpoints and LoRAs layer on top</small></dd>
+        <dt>Offline mode</dt><dd>Cached weights only<small>once models are downloaded the whole thing runs with no network at all</small></dd>
+        <dt>Cost</dt><dd>£0 per generation<small>no subscriptions, no API metering — only electricity</small></dd>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<section id="listen">
+  <div class="sec-head"><i>04</i><h2>Listen</h2></div>
+  <div class="card artifact fade">
+    <div class="meta">
+      <h3>30 seconds my GPU wrote</h3>
+      <p>A short clip from the Stable Audio Open workflow — text prompt in, MP3 out, generated locally on
+      the Radeon. No samples, no licensing, no cloud render.</p>
+    </div>
+    <div class="player">
+      <span class="dot"></span>
+      <audio controls controlsList="nodownload" preload="none">
+        <source src="/generated-music.mp3" type="audio/mpeg" />
+        Your browser does not support the audio element.
+      </audio>
+      <span class="tag">stable&nbsp;audio · 30s</span>
+    </div>
+  </div>
+</section>
+
+<section id="notes">
+  <div class="sec-head"><i>05</i><h2>Notes from the build</h2></div>
+  <div class="grid two">
+    <div class="card story fade"><i>i</i><div><h3>One launcher, four backends</h3><p>Rather than maintain separate setups, the startup script detects the GPU at launch and installs the
+    matching PyTorch build — CUDA, DirectML, ROCm or CPU — then verifies the device is actually live before
+    starting the server.</p></div></div>
+    <div class="card story fade"><i>ii</i><div><h3>DirectML as the AMD route</h3><p>On Windows the trick is to install the CPU PyTorch wheel and add the <code style="font-family:'JetBrains Mono',monospace;font-size:11px">torch-directml</code> plugin,
+    which exposes the Radeon as a torch device. No CUDA, no vendor lock-in — the same diffusers code just runs.</p></div></div>
+    <div class="card story fade"><i>iii</i><div><h3>Generation inside the editor</h3><p>Pixel art is generated where it's used: the Aseprite plugin talks to a local Flask server, so a prompt
+    becomes a sprite on the canvas without exporting, uploading or switching apps.</p></div></div>
+    <div class="card story fade"><i>iv</i><div><h3>Style, pinned by LoRA</h3><p>Raw SDXL drifts in style. Two pixel-art LoRAs applied through peft keep characters and tiles coherent,
+    so a set of assets actually looks like it belongs in the same game.</p></div></div>
+    <div class="card story fade" style="grid-column:1/-1"><i>v</i><div><h3>Local, private, and free to iterate</h3><p>Everything runs on one machine. With offline mode the pipeline needs no network once weights are cached,
+    nothing leaves the GPU, and there's no per-image bill — so experimenting is effectively free.</p></div></div>
+  </div>
+</section>
+
+<footer>
+  <p>© <span id="y">2026</span> Ray Mahbub · local-first generative tooling for game development</p>
+  <p><a href="https://github.com/ray98872">github</a></p>
+</footer>
+
+</div>
+<script>
+document.getElementById("y").textContent = new Date().getFullYear();
+if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+  const io = new IntersectionObserver((es) => {
+    es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } });
+  }, { threshold: 0.12 });
+  document.querySelectorAll(".fade").forEach((el) => io.observe(el));
+} else {
+  document.querySelectorAll(".fade").forEach((el) => el.classList.add("in"));
+}
+</script>
+</body>
+</html>
